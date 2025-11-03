@@ -5,9 +5,23 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>How to connect a Bryntum Scheduler Pro project to a Dynamics 365 Field Service project</title>
+    <link rel="stylesheet" href="src/style.css">
+    <script type="module" src="src/main.js" defer></script>
   </head>
   <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
+    <main>
+      <div id="content" style="display: none">
+        <div id="app"></div>
+      </div>
+      <div class="loader-container">
+        <div class="loader"></div>
+      </div>
+      <a id="signin" href="#" style="display: none"> 
+        <img
+          src="./ms-symbollockup_signin_light.png"
+          alt="Sign in with Microsoft"
+        />
+      </a>
+    </main>
   </body>
 </html>
