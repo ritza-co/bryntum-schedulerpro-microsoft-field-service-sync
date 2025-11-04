@@ -12,11 +12,31 @@ export const schedulerproConfig = {
     ],
     features : {
         dependencies : false,
-        eventEdit    : {
-            items : {
-                // Remove fields
-                percentDoneField : null
+        eventBuffer  : {
+            // The event buffer time spans are considered as unavailable time
+            bufferIsUnavailableTime : true,
+            tooltipTemplate         : ({ duration }) => `<i class="b-icon b-fa-car"></i>Travel time: ${duration}`,
+            renderer({ eventRecord, preambleConfig }) {
+                if (eventRecord.preamble) {
+                    preambleConfig.icon = eventRecord.preambleIcon;
+                    preambleConfig.cls  = eventRecord.preambleCls;
+                    preambleConfig.text = eventRecord.preamble.toString(true) + (eventRecord.preambleText ? ` (${eventRecord.preambleText})` : '');
+                }
+            }
+        },
 
+        taskEdit : {
+            items : {
+                generalTab : {
+                    items : {
+                        percentDoneField : null,
+                        effortField      : null,
+                        preambleField    : {
+                            label : 'Travel to'
+                        }
+
+                    }
+                }
             }
         }
     },

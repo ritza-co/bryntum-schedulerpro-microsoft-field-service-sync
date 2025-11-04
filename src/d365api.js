@@ -59,7 +59,7 @@ export async function getBookings() {
 
     const response = await fetch(
         `${orgUrl}/api/data/${apiVersion}/bookableresourcebookings?` +
-        `$select=bookableresourcebookingid,name,starttime,endtime,duration&` +
+        `$select=bookableresourcebookingid,name,starttime,endtime,duration,msdyn_estimatedtravelduration,msdyn_estimatedarrivaltime&` +
         `$expand=Resource($select=bookableresourceid)`,
         {
             headers: {
