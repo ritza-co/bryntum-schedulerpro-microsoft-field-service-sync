@@ -9,9 +9,9 @@ export const schedulerproConfig = {
     viewPreset : 'hourAndDay',
     columns    : [
         {
-            text : 'Name',
-            field : 'name',
-            width : 200,
+            text       : 'Name',
+            field      : 'name',
+            width      : 200,
             htmlEncode : false,
             renderer({ record }) {
                 const imageUrl = record.imageUrl || `https://${import.meta.env.VITE_MICROSOFT_DYNAMICS_ORG_ID}.crm4.dynamics.com/Webresources/msdyn_/fps/ScheduleBoard/css/images/unknownResource.jpg`;
@@ -29,14 +29,7 @@ export const schedulerproConfig = {
         eventBuffer  : {
             // The event buffer time spans are considered as unavailable time
             bufferIsUnavailableTime : true,
-            tooltipTemplate         : ({ duration }) => `<i class="b-icon b-fa-car"></i>Travel time: ${duration}`,
-            renderer({ eventRecord, preambleConfig }) {
-                if (eventRecord.preamble) {
-                    preambleConfig.icon = eventRecord.preambleIcon;
-                    preambleConfig.cls  = eventRecord.preambleCls;
-                    preambleConfig.text = eventRecord.preamble.toString(true) + (eventRecord.preambleText ? ` (${eventRecord.preambleText})` : '');
-                }
-            }
+            tooltipTemplate         : ({ duration }) => `<i class="b-icon b-fa-car"></i>Travel time: ${duration}`
         },
 
         taskEdit : {

@@ -42,3 +42,20 @@ html {
 @-webkit-keyframes spin {
   to {transform: rotate(360deg); }
 }
+
+.b-sch-horizontal .b-sch-event-wrap .b-sch-event-buffer-before:not(.b-buffer-thin){
+  border-inline-start:3px solid #ccc;
+}
+.b-sch-horizontal .b-sch-event-wrap .b-sch-event-buffer-after:not(.b-buffer-thin){
+  border-inline-end:3px solid #ccc;
+}
+.b-sch-horizontal .b-sch-event-wrap .event-duration{
+  margin-top:0.3em;
+}
+.b-sch-horizontal .b-sch-event-wrap .b-sch-event:not(.b-milestone) .b-fa{
+  margin-inline-end:0.75em;
+}
+
+.b-sch-vertical .b-sch-event-wrap .b-sch-event-buffer-before:not(.b-buffer-thin){
+  border-top:3px solid #ccc;
+}
