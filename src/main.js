@@ -26,45 +26,17 @@ async function displayUI() {
     console.log('Resources:', resourcesData);
     console.log('Bookings:', bookingsData);
 
-    // Map D365 resources to Bryntum resources
-    const schedulerResources = [];
-    resourcesData.value.forEach((resource) => {
-        schedulerResources.push({
-            id                 : resource.bookableresourceid,
-            name               : resource.name,
-            bookableresourceid : resource.bookableresourceid,
-            etag               : resource['@odata.etag']?.replace(/\\"/g, '"')
-        });
-    });
-
-    // Map D365 bookings to Bryntum events
-    const schedulerEvents = [];
-    bookingsData.value.forEach((booking) => {
-        schedulerEvents.push({
-            id                        : booking.bookableresourcebookingid,
-            name                      : booking.name || 'Untitled Booking',
-            startDate                 : new Date(booking.starttime),
-            endDate                   : new Date(booking.endtime),
-            duration                  : booking.duration,
-            durationUnit              : 'minute',
-            resourceId                : booking.Resource?.bookableresourceid,
-            bookableresourcebookingid : booking.bookableresourcebookingid,
-            etag                      : booking['@odata.etag']?.replace(/\\"/g, '"')
-        });
-    });
-
-    // Initialize Scheduler Pro with D365 data
+    // Initialize Scheduler Pro with raw D365 data
+    // Field mapping is handled by CustomEventModel and CustomResourceModel
     new SchedulerPro({
         ...schedulerproConfig,
-        project : {
-            eventStore : {
-                modelClass : CustomEventModel
-            },
-            resourceStore : {
-                modelClass : CustomResourceModel
-            },
-            resources : schedulerResources,
-            events    : schedulerEvents
+        resourceStore : {
+            modelClass : CustomResourceModel,
+            data       : resourcesData.value
+        },
+        eventStore : {
+            modelClass : CustomEventModel,
+            data       : bookingsData.value
         }
     });
 }
