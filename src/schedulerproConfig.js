@@ -46,14 +46,8 @@ async function updateDynamics365FieldService(event) {
 
                 const bookingUpdates = {};
 
-                // Extract travel minutes from preamble if exists
-                let travelMinutes = 0;
-                if (recordData.preamble) {
-                    const match = recordData.preamble.match(/\d+/);
-                    if (match) {
-                        travelMinutes = parseInt(match[0]);
-                    }
-                }
+                // Get travel duration from the travelDuration field (mapped to msdyn_estimatedtravelduration)
+                const travelMinutes = recordData.travelDuration || 0;
 
                 // Check if any time-related field changed
                 const hasTimeChange = 'startDate' in modifiedFields || 'endDate' in modifiedFields || 'duration' in modifiedFields;
@@ -89,15 +83,15 @@ async function updateDynamics365FieldService(event) {
 
                     if (travelMinutes > 0) {
                         // With travel time: only update changed fields
+                        // Don't update msdyn_estimatedtravelduration as it's calculated by Field Service
                         if (hasStartChange) {
-                            // Start date changed - update start time, arrival time, and travel duration
+                            // Start date changed - update start time and arrival time
                             const arrivalTime = record.startDate;
                             const actualStartTime = new Date(arrivalTime.getTime());
                             actualStartTime.setMinutes(actualStartTime.getMinutes() - travelMinutes);
 
                             bookingUpdates.starttime = actualStartTime.toISOString();
                             bookingUpdates.msdyn_estimatedarrivaltime = arrivalTime.toISOString();
-                            bookingUpdates.msdyn_estimatedtravelduration = travelMinutes;
                         }
 
                         if (hasEndChange) {
