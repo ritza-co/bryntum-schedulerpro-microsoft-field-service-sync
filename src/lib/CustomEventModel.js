@@ -10,12 +10,18 @@ export default class CustomEventModel extends EventModel {
         { name : 'startDate', dataSource : 'msdyn_estimatedarrivaltime', type : 'date' },
         { name : 'endDate', dataSource : 'endtime', type : 'date' },
         { name : 'durationUnit', defaultValue : 'minute' },
+        // Store the raw travel duration value
+        { name : 'travelDuration', dataSource : 'msdyn_estimatedtravelduration', type : 'number' },
         {
             name    : 'preamble',
             type    : 'string',
             convert : (_value, data) => {
-                const duration = data.msdyn_estimatedtravelduration;
-                return duration ? `${duration} minutes` : null;
+                // Only convert when loading from D365 (data will have msdyn_estimatedtravelduration)
+                if (data && data.msdyn_estimatedtravelduration != null) {
+                    return `${data.msdyn_estimatedtravelduration} minutes`;
+                }
+                // Return null to let the raw value pass through
+                return null;
             }
         },
         { name : 'resourceId', dataSource : 'Resource.bookableresourceid' },

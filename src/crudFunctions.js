@@ -53,31 +53,14 @@ export async function getBookings() {
     return await response.json();
 }
 
-// Update a work order in D365 Field Service
-export async function updateWorkOrder(workOrderId, updates) {
-    const token = await getToken();
-
-    const response = await fetch(
-        `${orgUrl}/api/data/${apiVersion}/msdyn_workorders(${workOrderId})`,
-        {
-            method  : 'PATCH',
-            headers : {
-                'Authorization'    : `Bearer ${token}`,
-                'Content-Type'     : 'application/json',
-                'OData-MaxVersion' : '4.0',
-                'OData-Version'    : '4.0'
-            },
-            body : JSON.stringify(updates)
-        }
-    );
-
-    if (!response.ok) {
-        throw new Error(`Failed to update work order: ${response.statusText}`);
-    }
-}
-
 // Update a booking in D365 Field Service
 export async function updateBooking(bookingId, updates) {
+    // Safety check: don't try to update records that haven't been created yet
+    if (`${bookingId}`.startsWith('_generated')) {
+        console.error('Cannot update booking with generated ID:', bookingId);
+        throw new Error('Cannot update a booking that has not been created in D365. Use createBooking instead.');
+    }
+
     const token = await getToken();
 
     const response = await fetch(
@@ -87,6 +70,7 @@ export async function updateBooking(bookingId, updates) {
             headers : {
                 'Authorization'    : `Bearer ${token}`,
                 'Content-Type'     : 'application/json',
+                'Accept'           : 'application/json',
                 'OData-MaxVersion' : '4.0',
                 'OData-Version'    : '4.0'
             },
@@ -95,7 +79,9 @@ export async function updateBooking(bookingId, updates) {
     );
 
     if (!response.ok) {
-        throw new Error(`Failed to update booking: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Update booking failed:', response.status, errorText);
+        throw new Error(`Failed to update booking: ${response.status} ${response.statusText}`);
     }
 }
 
@@ -111,7 +97,8 @@ export async function createBooking(bookingData) {
                 'Authorization'    : `Bearer ${token}`,
                 'Content-Type'     : 'application/json',
                 'OData-MaxVersion' : '4.0',
-                'OData-Version'    : '4.0'
+                'OData-Version'    : '4.0',
+                'Prefer'           : 'return=representation'
             },
             body : JSON.stringify(bookingData)
         }
@@ -126,6 +113,11 @@ export async function createBooking(bookingData) {
 
 // Delete a booking from D365 Field Service
 export async function deleteBooking(bookingId) {
+    // Don't try to delete records that were never created
+    if (`${bookingId}`.startsWith('_generated')) {
+        return;
+    }
+
     const token = await getToken();
 
     const response = await fetch(
