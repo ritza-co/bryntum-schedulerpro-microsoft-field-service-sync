@@ -185,7 +185,7 @@ async function updateDynamics365FieldService(event) {
                             break;
                         case 'resourceId': {
                             // Get the resource ID from the event's resource assignment
-                            const resourceId = recordData.Resource?.bookableresourceid || record.resources?.[0]?.id ||record.resources?.[0]?.bookableresourceid;
+                            const resourceId = recordData.Resource?.bookableresourceid || record.resources?.[0]?.id || record.resources?.[0]?.bookableresourceid;
                             if (resourceId) {
                                 bookingUpdates['Resource@odata.bind'] = `/bookableresources(${resourceId})`;
                             }

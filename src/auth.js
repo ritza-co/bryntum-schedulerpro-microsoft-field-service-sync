@@ -19,13 +19,6 @@ const msalInstance =
 const msalRequest = { scopes : [`https://${
     import.meta.env.VITE_MICROSOFT_DYNAMICS_ORG_ID
   }.api.crm4.dynamics.com/.default`] };
-export function ensureScope(scope) {
-    if (
-        !msalRequest.scopes.some((s) => s.toLowerCase() === scope.toLowerCase())
-    ) {
-        msalRequest.scopes.push(scope);
-    }
-}
 
 // Log the user in
 export async function signIn() {
