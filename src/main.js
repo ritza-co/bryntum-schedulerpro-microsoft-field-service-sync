@@ -37,7 +37,6 @@ async function displayUI() {
             data       : bookingsData.value
         }
     });
-
 }
 
 if (sessionStorage.getItem('msalAccount')) {

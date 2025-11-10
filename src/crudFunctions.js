@@ -53,7 +53,31 @@ export async function getBookings() {
     return await response.json();
 }
 
-// Update a booking in D365 Field Service
+export async function createBooking(bookingData) {
+    const token = await getToken();
+
+    const response = await fetch(
+      `${orgUrl}/api/data/${apiVersion}/bookableresourcebookings`,
+      {
+          method  : 'POST',
+          headers : {
+              'Authorization'    : `Bearer ${token}`,
+              'Content-Type'     : 'application/json',
+              'OData-MaxVersion' : '4.0',
+              'OData-Version'    : '4.0',
+              'Prefer'           : 'return=representation'
+          },
+          body : JSON.stringify(bookingData)
+      }
+    );
+
+    if (!response.ok) {
+        throw new Error(`Failed to create booking: ${response.statusText}`);
+    }
+
+    return await response.json();
+}
+
 export async function updateBooking(bookingId, updates) {
     // Safety check: don't try to update records that haven't been created yet
     if (`${bookingId}`.startsWith('_generated')) {
@@ -85,33 +109,6 @@ export async function updateBooking(bookingId, updates) {
     }
 }
 
-// Create a new booking in D365 Field Service
-export async function createBooking(bookingData) {
-    const token = await getToken();
-
-    const response = await fetch(
-        `${orgUrl}/api/data/${apiVersion}/bookableresourcebookings`,
-        {
-            method  : 'POST',
-            headers : {
-                'Authorization'    : `Bearer ${token}`,
-                'Content-Type'     : 'application/json',
-                'OData-MaxVersion' : '4.0',
-                'OData-Version'    : '4.0',
-                'Prefer'           : 'return=representation'
-            },
-            body : JSON.stringify(bookingData)
-        }
-    );
-
-    if (!response.ok) {
-        throw new Error(`Failed to create booking: ${response.statusText}`);
-    }
-
-    return await response.json();
-}
-
-// Delete a booking from D365 Field Service
 export async function deleteBooking(bookingId) {
     // Don't try to delete records that were never created
     if (`${bookingId}`.startsWith('_generated')) {

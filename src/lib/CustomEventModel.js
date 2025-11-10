@@ -18,7 +18,6 @@ export default class CustomEventModel extends EventModel {
             convert : (_value, data) => {
                 // Only convert when loading from D365 (data will have msdyn_estimatedtravelduration)
                 if (data && data.msdyn_estimatedtravelduration != null) {
-                    console.log(data.msdyn_estimatedtravelduration, typeof data.msdyn_estimatedtravelduration);
                     return `${data.msdyn_estimatedtravelduration} minutes`;
                 }
                 // Return null to let the raw value pass through

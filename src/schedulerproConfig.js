@@ -6,117 +6,6 @@ import {
     deleteBooking
 } from './crudFunctions.js';
 
-async function updateDynamics365FieldService(event) {
-    const { action, store, records } = event;
-    const storeId = store.id;
-
-    // Only handle events store (bookings)
-    if (storeId !== 'events') {
-        return;
-    }
-
-    try {
-        if (action === 'remove') {
-            // Handle DELETE
-            for (const record of records) {
-                const recordData = record.data;
-                // Skip if this is a generated ID (never saved to D365)
-                if (`${recordData?.id}`.startsWith('_generated')) {
-                    continue;
-                }
-
-                if (recordData.bookableresourcebookingid) {
-                    await deleteBooking(recordData.bookableresourcebookingid);
-                }
-            }
-        }
-        else if (action === 'update') {
-            for (const record of records) {
-                const recordData = record.data;
-
-                // Skip new records with generated IDs - they're handled by afterEventSave
-                if (`${record.id}`.startsWith('_generated')) {
-                    continue;
-                }
-
-                const modifiedFields = record.meta?.modified || {};
-
-                if (Object.keys(modifiedFields).length === 0) {
-                    continue;
-                }
-
-                const bookingUpdates = {};
-
-                // Get travel duration from the travelDuration field (mapped to msdyn_estimatedtravelduration)
-                console.log({ recordData });
-                let travelMinutes = null;
-                if (recordData?.preamble) {
-                    travelMinutes = DateHelper.parseDuration(recordData.preamble).magnitude;
-                }
-
-                // Check if any time-related field changed
-                const hasTimeChange = 'startDate' in modifiedFields || 'endDate' in modifiedFields || 'duration' in modifiedFields;
-
-                // Build update payload from modified fields
-                Object.keys(modifiedFields).forEach(key => {
-                    switch (key) {
-                        case 'name':
-                            bookingUpdates.name = record.name;
-                            break;
-                        case 'startDate':
-                        case 'endDate':
-                        case 'duration':
-                            // Time fields are handled together below
-                            break;
-                        case 'resourceId': {
-                            // Get the resource ID from the event's resource assignment
-                            const resourceId = recordData.Resource?.bookableresourceid ||
-                                                     record.resources?.[0]?.id ||
-                                                     record.resources?.[0]?.bookableresourceid;
-                            if (resourceId) {
-                                bookingUpdates['Resource@odata.bind'] = `/bookableresources(${resourceId})`;
-                            }
-                            break;
-                        }
-                    }
-                });
-
-                // Handle all time fields together when any time field changes
-                if (hasTimeChange) {
-                    const hasStartChange = 'startDate' in modifiedFields;
-                    const hasEndChange = 'endDate' in modifiedFields;
-
-                    if (hasStartChange) {
-                        console.log({ travelMinutes });
-                        // Calculate starttime by subtracting travel from work start time
-                        // Field Service will calculate msdyn_estimatedarrivaltime = starttime + travel
-                        const workStartTime = record.startDate;
-                        const actualStartTime = new Date(workStartTime.getTime());
-                        actualStartTime.setMinutes(actualStartTime.getMinutes() - travelMinutes);
-
-                        bookingUpdates.starttime = actualStartTime.toISOString();
-                    }
-
-                    if (hasEndChange) {
-                        const workEndTime = record.endDate;
-                        const actualEndTime = new Date(workEndTime.getTime());
-                        actualEndTime.setMinutes(actualEndTime.getMinutes() - travelMinutes);
-
-                        bookingUpdates.endtime = actualEndTime.toISOString();
-                    }
-                }
-
-                if (Object.keys(bookingUpdates).length > 0 && recordData.bookableresourcebookingid) {
-                    await updateBooking(recordData.bookableresourcebookingid, bookingUpdates);
-                }
-            }
-        }
-    }
-    catch (error) {
-        console.error('Error syncing to D365:', error);
-    }
-}
-
 export const schedulerproConfig = {
     appendTo   : 'app',
     startDate  : new Date(2025, 9, 31, 8),
@@ -231,5 +120,111 @@ async function createBookingItem(eventRecord, source) {
     }
     catch (error) {
         console.error('Error creating booking in D365:', error);
+    }
+}
+
+async function updateDynamics365FieldService(event) {
+    const { action, store, records } = event;
+    const storeId = store.id;
+
+    // Only handle events store (bookings)
+    if (storeId !== 'events') {
+        return;
+    }
+
+    try {
+        if (action === 'remove') {
+            for (const record of records) {
+                const recordData = record.data;
+                // Skip if this is a generated ID (never saved to D365)
+                if (`${recordData?.id}`.startsWith('_generated')) {
+                    continue;
+                }
+
+                if (recordData.bookableresourcebookingid) {
+                    await deleteBooking(recordData.bookableresourcebookingid);
+                }
+            }
+        }
+        else if (action === 'update') {
+            for (const record of records) {
+                const recordData = record.data;
+
+                // Skip new records with generated IDs - they're handled by afterEventSave
+                if (`${record.id}`.startsWith('_generated')) {
+                    continue;
+                }
+
+                const modifiedFields = record.meta?.modified || {};
+
+                if (Object.keys(modifiedFields).length === 0) {
+                    continue;
+                }
+
+                const bookingUpdates = {};
+
+                // Get travel duration from the travelDuration field (mapped to msdyn_estimatedtravelduration)
+                let travelMinutes = null;
+                if (recordData?.preamble) {
+                    travelMinutes = DateHelper.parseDuration(recordData.preamble).magnitude;
+                }
+
+                // Check if any time-related field changed
+                const hasTimeChange = 'startDate' in modifiedFields || 'endDate' in modifiedFields || 'duration' in modifiedFields;
+
+                // Build update payload from modified fields
+                Object.keys(modifiedFields).forEach(key => {
+                    switch (key) {
+                        case 'name':
+                            bookingUpdates.name = record.name;
+                            break;
+                        case 'startDate':
+                        case 'endDate':
+                        case 'duration':
+                            // Time fields are handled together below
+                            break;
+                        case 'resourceId': {
+                            // Get the resource ID from the event's resource assignment
+                            const resourceId = recordData.Resource?.bookableresourceid || record.resources?.[0]?.id ||record.resources?.[0]?.bookableresourceid;
+                            if (resourceId) {
+                                bookingUpdates['Resource@odata.bind'] = `/bookableresources(${resourceId})`;
+                            }
+                            break;
+                        }
+                    }
+                });
+
+                // Handle all time fields together when any time field changes
+                if (hasTimeChange) {
+                    const hasStartChange = 'startDate' in modifiedFields;
+                    const hasEndChange = 'endDate' in modifiedFields;
+
+                    if (hasStartChange) {
+                        // Calculate starttime by subtracting travel from work start time
+                        // Field Service will calculate msdyn_estimatedarrivaltime = starttime + travel
+                        const workStartTime = record.startDate;
+                        const actualStartTime = new Date(workStartTime.getTime());
+                        actualStartTime.setMinutes(actualStartTime.getMinutes() - travelMinutes);
+
+                        bookingUpdates.starttime = actualStartTime.toISOString();
+                    }
+
+                    if (hasEndChange) {
+                        const workEndTime = record.endDate;
+                        const actualEndTime = new Date(workEndTime.getTime());
+                        actualEndTime.setMinutes(actualEndTime.getMinutes() - travelMinutes);
+
+                        bookingUpdates.endtime = actualEndTime.toISOString();
+                    }
+                }
+
+                if (Object.keys(bookingUpdates).length > 0 && recordData.bookableresourcebookingid) {
+                    await updateBooking(recordData.bookableresourcebookingid, bookingUpdates);
+                }
+            }
+        }
+    }
+    catch (error) {
+        console.error('Error syncing to D365:', error);
     }
 }
