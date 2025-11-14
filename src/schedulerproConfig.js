@@ -22,7 +22,7 @@ export const schedulerproConfig = {
             width         : 200,
             htmlEncode    : false,
             renderer({ record }) {
-                const imageUrl = record.imageUrl || `https://${import.meta.env.VITE_MICROSOFT_DYNAMICS_ORG_ID}.crm4.dynamics.com/Webresources/msdyn_/fps/ScheduleBoard/css/images/unknownResource.jpg`;
+                const imageUrl = record.imageUrl;
                 const name = record.name || '';
 
                 return `<div style="display: flex; align-items: center; gap: 8px;">

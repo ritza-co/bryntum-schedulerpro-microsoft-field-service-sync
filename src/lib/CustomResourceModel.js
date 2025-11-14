@@ -1,4 +1,38 @@
 import { ResourceModel } from '@bryntum/schedulerpro';
+import { getToken } from '../auth.js';
+
+// Fetch and cache the default unknown resource image
+let defaultResourceImageBase64 = null;
+const defaultImageUrl = `https://${import.meta.env.VITE_MICROSOFT_DYNAMICS_ORG_ID}.crm4.dynamics.com/Webresources/msdyn_/fps/ScheduleBoard/css/images/unknownResource.jpg`;
+
+// Fetch the default image and convert to base64
+(async() => {
+    try {
+        const token = await getToken();
+        const response = await fetch(defaultImageUrl, {
+            headers : {
+                'Authorization'    : `Bearer ${token}`,
+                'Accept'           : 'application/json',
+                'OData-MaxVersion' : '4.0',
+                'OData-Version'    : '4.0'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch default resource image: ${response.statusText}`);
+        }
+
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            defaultResourceImageBase64 = reader.result;
+        };
+        reader.readAsDataURL(blob);
+    }
+    catch (error) {
+        console.error('Failed to fetch default resource image:', error);
+    }
+})();
 
 // Custom resource model for D365 Field Service bookable resources
 export default class CustomResourceModel extends ResourceModel {
@@ -16,7 +50,8 @@ export default class CustomResourceModel extends ResourceModel {
                     // entityimage is base64 encoded, convert to data URL
                     return `data:image/jpeg;base64,${entityImage}`;
                 }
-                return null;
+                // Return the default resource image if available
+                return defaultResourceImageBase64;
             }
         },
         {
