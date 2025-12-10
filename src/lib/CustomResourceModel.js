@@ -5,8 +5,13 @@ import { getToken } from '../auth.js';
 let defaultResourceImageBase64 = null;
 const defaultImageUrl = `https://${import.meta.env.VITE_MICROSOFT_DYNAMICS_ORG_ID}.crm4.dynamics.com/Webresources/msdyn_/fps/ScheduleBoard/css/images/unknownResource.jpg`;
 
-// Fetch the default image and convert to base64
-(async() => {
+// Function to load the default image (called after authentication)
+export async function loadDefaultImage() {
+    // Return immediately if already loaded
+    if (defaultResourceImageBase64) {
+        return;
+    }
+
     try {
         const token = await getToken();
         const response = await fetch(defaultImageUrl, {
@@ -23,16 +28,19 @@ const defaultImageUrl = `https://${import.meta.env.VITE_MICROSOFT_DYNAMICS_ORG_I
         }
 
         const blob = await response.blob();
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            defaultResourceImageBase64 = reader.result;
-        };
-        reader.readAsDataURL(blob);
+
+        // Convert blob to base64 using a promise-based approach
+        defaultResourceImageBase64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
     }
     catch (error) {
         console.error('Failed to fetch default resource image:', error);
     }
-})();
+}
 
 // Custom resource model for D365 Field Service bookable resources
 export default class CustomResourceModel extends ResourceModel {

@@ -4,7 +4,7 @@ import { schedulerproConfig } from './schedulerproConfig';
 import { signIn } from './auth.js';
 import { getResources, getBookings } from './crudFunctions.js';
 import CustomEventModel from './lib/CustomEventModel.js';
-import CustomResourceModel from './lib/CustomResourceModel.js';
+import CustomResourceModel, { loadDefaultImage } from './lib/CustomResourceModel.js';
 
 const signInLink = document.getElementById('signin');
 const loaderContainer = document.querySelector('.loader-container');
@@ -19,14 +19,16 @@ async function displayUI() {
     content.style = 'display: block';
 
     // Display Scheduler Pro after sign in
+    // Wait for resources, bookings, and default image to load
     const [resourcesData, bookingsData] = await Promise.all([
         getResources(),
-        getBookings()
+        getBookings(),
+        loadDefaultImage()
     ]);
 
     // Initialize Scheduler Pro with raw D365 data
     // Field mapping is handled by CustomEventModel and CustomResourceModel
-    const schedulerPro = new SchedulerPro({
+    window.schedulerPro = new SchedulerPro({
         ...schedulerproConfig,
         resourceStore : {
             modelClass : CustomResourceModel,

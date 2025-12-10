@@ -6,10 +6,22 @@ import {
     deleteBooking
 } from './crudFunctions.js';
 
+const today = new Date();
+
+const updateSavingValue = (text = 'Idle', color = 'green') => {
+    if (window.schedulerPro) {
+        const { savingValue } = window.schedulerPro.widgetMap;
+        if (savingValue) {
+            savingValue.html = text;
+            savingValue.element.style.color = color;
+        }
+    }
+};
+
 export const schedulerproConfig = {
     appendTo   : 'app',
-    startDate  : new Date(2025, 9, 31, 8),
-    endDate    : new Date(2025, 9, 31, 21),
+    startDate  : new Date(today.getFullYear(), today.getMonth(), today.getDate(), 8),
+    endDate    : new Date(today.getFullYear(), today.getMonth(), today.getDate(), 21),
     // Use local timezone instead of UTC for display
     // Data will still be sent/received as UTC via ISO strings
     viewPreset : 'hourAndDay',
@@ -67,6 +79,14 @@ export const schedulerproConfig = {
     },
     tbar : {
         items : {
+            savingStatus : {
+                type   : 'container',
+                layout : 'hbox',
+                items  : {
+                    label       : 'Saving status:',
+                    savingValue : 'Idle'
+                }
+            },
             deleteButton : {
                 text  : 'Signout',
                 icon  : 'fa fa-sign-out',
@@ -83,6 +103,7 @@ export const schedulerproConfig = {
 };
 
 async function createBookingItem(eventRecord, source) {
+    updateSavingValue('Updating Field Service', 'orange');
     try {
         const recordData = eventRecord.data;
 
@@ -93,6 +114,7 @@ async function createBookingItem(eventRecord, source) {
 
         if (!resourceId) {
             console.log('Cannot create booking - no resource assigned');
+            updateSavingValue();
             return;
         }
 
@@ -117,9 +139,13 @@ async function createBookingItem(eventRecord, source) {
                 }
             ]
         });
+
+        updateSavingValue();
     }
     catch (error) {
-        console.error('Error creating booking in D365:', error);
+        console.error('Error creating booking in Field Service:', error);
+        updateSavingValue('Error', 'red');
+        setTimeout(() => updateSavingValue(), 5000);
     }
 }
 
@@ -131,6 +157,8 @@ async function updateDynamics365FieldService(event) {
     if (storeId !== 'events') {
         return;
     }
+
+    updateSavingValue('Updating Field Service', 'orange');
 
     try {
         if (action === 'remove') {
@@ -223,8 +251,12 @@ async function updateDynamics365FieldService(event) {
                 }
             }
         }
+
+        updateSavingValue();
     }
     catch (error) {
-        console.error('Error syncing to D365:', error);
+        console.error('Error syncing to Field Service:', error);
+        updateSavingValue('Error', 'red');
+        setTimeout(() => updateSavingValue(), 5000);
     }
 }
